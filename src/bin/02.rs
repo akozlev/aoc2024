@@ -1,3 +1,5 @@
+use std::cmp::Ordering;
+
 use itertools::Itertools;
 
 advent_of_code::solution!(2);
@@ -24,28 +26,35 @@ pub fn part_one(input: &str) -> Option<usize> {
     Some(lines.count())
 }
 
-pub fn part_two(input: &str) -> Option<usize> {
-    let lines = input.lines().flat_map(|line| {
-        let nums = line
-            .split(' ')
-            .map(|n| n.parse::<u32>().expect("Unexpected non-number input"));
+pub fn is_valid(sequence: Vec<&u32>) -> bool {
+    let iter = sequence.iter().tuple_windows::<(_, _)>().map(|(a, b)| {
+        let diff = a.abs_diff(**b);
+        if !(1..=3).contains(&diff) {
+            return None;
+        }
 
-        for num in nums {}
-
-        let row = line
-            .split(' ')
-            .map(|n| n.parse::<u32>().unwrap())
-            .tuple_windows::<(_, _)>()
-            .map(|(a, b)| {
-                let diff = a.abs_diff(b);
-                ((1..=3).contains(&diff), a.cmp(&b))
-            })
-            .collect::<Vec<_>>();
-        println!("{row:?}");
-        row
+        Some(a.cmp(b))
     });
 
-    Some(lines.count())
+    iter.clone().all(|x| x.is_some()) && iter.clone().all_equal()
+}
+
+pub fn part_two(input: &str) -> Option<usize> {
+    let lines = input.lines().map(|line| {
+        let nums = line
+            .split(' ')
+            .map(|n| n.parse::<u32>().expect("Unexpected non-number input"))
+            .collect::<Vec<_>>();
+
+        let any_valid = nums
+            .iter()
+            .combinations(nums.len() - 1)
+            .any(|seq| is_valid(seq));
+
+        any_valid
+    });
+
+    Some(lines.filter(|&x| x).count())
 }
 
 #[cfg(test)]
